@@ -10,18 +10,18 @@ class StyleGen(nn.Module):
         super(StyleGen, self).__init__()
         self.name = f'{self.__class__.__name__}_{dataset}'
 
-        self.encoder = nn.Sequential(
+        self.conv_block1 = nn.Sequential(
             ConvBlock(3, 32, kernel_size=7, stride=1, padding=3, norm_type="layer"),
             ConvBlock(32, 64, kernel_size=3, stride=2, padding=(0, 1, 0, 1), norm_type="layer"),
             ConvBlock(64, 64, kernel_size=3, stride=1, norm_type="layer"),
         )
 
-        self.downsample = nn.Sequential(
+        self.conv_block2 = nn.Sequential(
             ConvBlock(64, 128, kernel_size=3, stride=2, padding=(0, 1, 0, 1), norm_type="layer"),
             ConvBlock(128, 128, kernel_size=3, stride=1, norm_type="layer"),
         )
 
-        self.residual_blocks = nn.Sequential(
+        self.res_blocks = nn.Sequential(
             ConvBlock(128, 128, kernel_size=3, stride=1, norm_type="layer"),
             InvertedResBlock(128, 256, expand_ratio=2, norm_type="layer"),
             InvertedResBlock(256, 256, expand_ratio=2, norm_type="layer"),
@@ -30,18 +30,18 @@ class StyleGen(nn.Module):
             ConvBlock(256, 128, kernel_size=3, stride=1, norm_type="layer"),
         )
 
-        self.convert_blocks = nn.Sequential(
+        self.conv_block3 = nn.Sequential(
             ConvBlock(128, 128, kernel_size=3, stride=1, norm_type="layer"),
             ConvBlock(128, 128, kernel_size=3, stride=1, norm_type="layer"),
         )
 
-        self.upsample = nn.Sequential(
+        self.conv_block4 = nn.Sequential(
             ConvBlock(128, 64, kernel_size=3, stride=1, norm_type="layer"),
             ConvBlock(64, 64, kernel_size=3, stride=1, norm_type="layer"),
             ConvBlock(64, 32, kernel_size=7, padding=3, stride=1, norm_type="layer"),
         )
 
-        self.decoder = nn.Sequential(
+        self.decode_blocks = nn.Sequential(
             nn.Conv2d(32, 3, kernel_size=1, stride=1, padding=0),
             nn.Tanh(),
         )
@@ -49,13 +49,13 @@ class StyleGen(nn.Module):
         initialize_weights(self)
 
     def forward(self, x):
-        out = self.encoder(x)
-        out = self.downsample(out)
-        out = self.residual_blocks(out)
+        out = self.conv_block1(x)
+        out = self.conv_block2(out)
+        out = self.res_blocks(out)
         out = F.interpolate(out, scale_factor=2, mode="bilinear")
-        out = self.convert_blocks(out)
+        out = self.conv_block3(out)
         out = F.interpolate(out, scale_factor=2, mode="bilinear")
-        out = self.upsample(out)
-        img = self.decoder(out)
+        out = self.conv_block4(out)
+        img = self.decode_blocks(out)
 
         return img

@@ -26,7 +26,7 @@ tensorboard --logdir=path/to/experiment
 ```
 
 ## Project Structure
-- `train.py`: Script for training the AnimeGAN model.
+- `train.py`: Script for training the GAN model.
 - `transform.py`: Script for transforming images using a pre-trained model.
 - `models/`: Directory containing model definitions.
 - `lib/`: Directory containing utility functions and classes.
